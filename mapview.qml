@@ -32,14 +32,13 @@ Item {
             model:marker_model
             delegate: MapQuickItem {
 
-                coordinate:  model.position
-
+                coordinate: QtPositioning.coordinate(position.x, position.y)
                 anchorPoint.x: image.width * 0.5
                 anchorPoint.y: image.height
 
                 sourceItem: Column {
                     Image { id: image; source: "marker.png" }
-                    Text { text: 'model.text'; font.bold: true }
+                    Text { text: model.label; font.bold: true }
                 }
               }
             }

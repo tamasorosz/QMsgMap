@@ -35,22 +35,22 @@ bool Receiver::isConnected() const
     }
 }
 
-NamedCoordinate Receiver::parseJsonMessage(const std::string &message)
-{
-    NamedCoordinate namedCoordinate;
+//GeoCoordinateInfo Receiver::parseJsonMessage(const std::string &message)
+//{
+//    GeoCoordinateInfo namedCoordinate;
 
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(QString::fromStdString(message).toUtf8());
-    if (!jsonDoc.isNull() && jsonDoc.isObject()) {
-        QJsonObject jsonObj = jsonDoc.object();
+//    QJsonDocument jsonDoc = QJsonDocument::fromJson(QString::fromStdString(message).toUtf8());
+//    if (!jsonDoc.isNull() && jsonDoc.isObject()) {
+//        QJsonObject jsonObj = jsonDoc.object();
 
-        namedCoordinate.name = jsonObj.value("name").toString();
-        double longitude = jsonObj.value("long").toDouble();
-        double latitude = jsonObj.value("lat").toDouble();
-        namedCoordinate.position = QGeoCoordinate(latitude, longitude);
-    }
+//        namedCoordinate.name = jsonObj.value("name").toString();
+//        double longitude = jsonObj.value("long").toDouble();
+//        double latitude = jsonObj.value("lat").toDouble();
+//        namedCoordinate.position = GeoCoordinateInfo(latitude, longitude);
+//    }
 
-    return namedCoordinate;
-}
+//    return namedCoordinate;
+//}
 
 
 bool Receiver::declareQueue()
@@ -81,10 +81,10 @@ void Receiver::consumeMessages()
                 envelope = m_channel->BasicConsumeMessage(consumer_tag);
                 std::string message = envelope->Message()->Body();
                 qDebug() << "Received message: " << QString::fromStdString(message);
-                NamedCoordinate namedCoordinate = parseJsonMessage(message);
+                //NamedCoordinate namedCoordinate = parseJsonMessage(message);
 
                 // Process namedCoordinate as needed
-                qDebug() << "Parsed named coordinate: " << namedCoordinate.name << " at " << namedCoordinate.position;
+                //qDebug() << "Parsed named coordinate: " << namedCoordinate.name << " at " << namedCoordinate.position;
 
                 m_channel->BasicAck(envelope);
             }

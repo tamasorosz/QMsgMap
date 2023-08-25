@@ -1,4 +1,4 @@
-QT       += core gui quickwidgets positioning network
+QT       += core gui quickwidgets positioning network location
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TEMPLATE = app

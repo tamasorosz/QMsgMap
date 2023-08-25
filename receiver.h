@@ -16,7 +16,7 @@ public:
     ~Receiver();
     bool isConnected() const; // Method to check connection status
     bool attemptReconnect();
-    NamedCoordinate parseJsonMessage(const std::string &message);
+    //NamedCoordinate parseJsonMessage(const std::string &message);
 
 
 public slots:
