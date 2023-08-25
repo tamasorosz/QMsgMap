@@ -118,7 +118,6 @@ public:
 public:
     QHash<int, QByteArray> roleNames() const;
     Q_INVOKABLE void removeMarker(int index);
-    Q_INVOKABLE void removeMarkerByLocation(double x, double y);
 
 private:
     QList<MarkerItem*> _markers;

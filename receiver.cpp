@@ -35,24 +35,6 @@ bool Receiver::isConnected() const
     }
 }
 
-//GeoCoordinateInfo Receiver::parseJsonMessage(const std::string &message)
-//{
-//    GeoCoordinateInfo namedCoordinate;
-
-//    QJsonDocument jsonDoc = QJsonDocument::fromJson(QString::fromStdString(message).toUtf8());
-//    if (!jsonDoc.isNull() && jsonDoc.isObject()) {
-//        QJsonObject jsonObj = jsonDoc.object();
-
-//        namedCoordinate.name = jsonObj.value("name").toString();
-//        double longitude = jsonObj.value("long").toDouble();
-//        double latitude = jsonObj.value("lat").toDouble();
-//        namedCoordinate.position = GeoCoordinateInfo(latitude, longitude);
-//    }
-
-//    return namedCoordinate;
-//}
-
-
 bool Receiver::declareQueue()
 {
     try {
