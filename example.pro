@@ -1,0 +1,42 @@
+QT       += core gui quickwidgets positioning network
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+TEMPLATE = app
+CONFIG += c++17
+
+QMAKE_LFLAGS += -Wl,-rpath,$${PWD}\libs
+
+# You can make your code fail to compile if it uses deprecated APIs.
+# In order to do so, uncomment the following line.
+#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+SOURCES += \
+    main.cpp \
+    mainwindow.cpp \
+    markermodel.cpp \
+    receiver.cpp \
+    sender.cpp
+
+HEADERS += \
+    mainwindow.h \
+    markermodel.h \
+    receiver.h \
+    sender.h
+
+FORMS += \
+    mainwindow.ui
+
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    resources.qrc
+
+
+LIBS += -L./libs -lSimpleAmqpClient
+
+DISTFILES += libs/libSimpleAmqpClient.so.7
+QMAKE_POST_LINK += mkdir -p $$OUT_PWD/libs && cp $$PWD/libs/libSimpleAmqpClient.so.7 $$OUT_PWD/libs/libSimpleAmqpClient.so.7
+
