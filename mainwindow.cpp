@@ -10,7 +10,7 @@
 #include "markermodel.h"
 
 const double pi = std::acos(-1);
-const int refresh_time = 300;
+const int refresh_time = 3000;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),

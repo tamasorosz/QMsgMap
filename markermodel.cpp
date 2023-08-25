@@ -147,6 +147,20 @@ QVariant MarkerModel::data(const QModelIndex &index, int role) const{
     return QVariant();
 }
 
+void MarkerModel::removeMarker(int index) {
+    qDebug()<<"ram klikkeltel"<<index;
+    if (index >= 0 && index < _markers.count()) {
+        beginRemoveRows(QModelIndex(), index, index);
+        delete _markers.takeAt(index);
+        endRemoveRows();
+    }
+}
+
+void MarkerModel::removeMarkerByLocation(double x, double y) {
+    qDebug()<<"ram klikkeltel"<<x<<y;
+}
+
+
 QHash<int, QByteArray> MarkerModel::roleNames() const{
     QHash<int, QByteArray> roles;
     roles[PositionRole] = "position";

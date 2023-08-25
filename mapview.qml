@@ -16,6 +16,8 @@ Item {
             center: QtPositioning.coordinate(48.06, 20.47);
             zoomLevel: 14
 
+
+
             Timer
                 {
                     id: mapRefreshtimer
@@ -40,6 +42,15 @@ Item {
                     Image { id: image; source: "marker.png" }
                     Text { text: model.label; font.bold: true }
                 }
+                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: (mouse)=> {
+                                        mouse.accepted = false
+                                        //marker_model.removeMarkerByLocation(mouse.x, mouse.y);
+                                        marker_model.removeMarker(index)
+                                    }
+                                }
+
               }
             }
 

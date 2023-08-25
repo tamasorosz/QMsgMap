@@ -117,6 +117,9 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 public:
     QHash<int, QByteArray> roleNames() const;
+    Q_INVOKABLE void removeMarker(int index);
+    Q_INVOKABLE void removeMarkerByLocation(double x, double y);
+
 private:
     QList<MarkerItem*> _markers;
 public:
