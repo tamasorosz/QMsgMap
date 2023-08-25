@@ -16,7 +16,6 @@ public:
     ~Receiver();
     bool isConnected() const; // Method to check connection status
     bool attemptReconnect();
-    //NamedCoordinate parseJsonMessage(const std::string &message);
 
 
 public slots:
@@ -30,6 +29,8 @@ private:
     void consumeMessages();
     bool deleteQueue();
     bool queueExists();
+    MarkerItem parseMarkerItem(const QString &jsonString);
+
 };
 
 #endif // RECEIVER_H
