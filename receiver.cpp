@@ -5,7 +5,17 @@
 
 Receiver::Receiver(QObject *parent) : QObject(parent)
 {
-    m_channel = AmqpClient::Channel::Create();
+    //m_channel = AmqpClient::Channel::Create();
+    //connect(this, &QObject::destroyed, this, &Receiver::cleanupOnExit);
+    // Connect to RabbitMQ server
+    std::string hostname = "localhost";
+    int port = 5672;
+    std::string username = "guest";
+    std::string password = "guest";
+
+    AmqpClient::Channel::ptr_t connectionChannel = AmqpClient::Channel::Create(hostname, port, username, password);
+    m_channel = connectionChannel;
+
     connect(this, &QObject::destroyed, this, &Receiver::cleanupOnExit);
 }
 
@@ -39,7 +49,14 @@ bool Receiver::declareQueue()
     try {
         if (m_channel) {
             qDebug() << "Declaring...";
-            m_channel->DeclareQueue("homework", false, true, false, false);
+            std::string exchangeName = "positions";
+            // Declare a named queue
+            std::string queueName = "homework";
+            m_channel->DeclareQueue(queueName, false, true, false, false);
+
+            // Bind the queue to the exchange
+            m_channel->BindQueue(queueName, exchangeName, queueName);
+
             return true;
         } else {
             qDebug() << "Channel is not valid.";
@@ -111,7 +128,7 @@ void Receiver::consumeMessages()
     {
         try {
             if (declareQueue()) {
-                std::string consumer_tag = m_channel->BasicConsume("homework", "", true, false, false);
+                std::string consumer_tag = m_channel->BasicConsume("", "", true, false, false);
                 envelope = m_channel->BasicConsumeMessage(consumer_tag);
                 std::string message = envelope->Message()->Body();
                 qDebug() << "Received message: " << QString::fromStdString(message);
@@ -119,7 +136,7 @@ void Receiver::consumeMessages()
                 MarkerItem markerItem = parseMarkerItem(QString::fromStdString(message));
 
                 emit messageReceived(markerItem);
-                // Process markerItem as needed
+
                 qDebug() << "Parsed markerItem: " << markerItem.label() << " at " << markerItem.position();
 
                 m_channel->BasicAck(envelope);

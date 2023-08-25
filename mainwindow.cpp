@@ -67,16 +67,4 @@ void MainWindow::onTimeout()
         timer->setInterval(refresh_time*pow(tries_to_reconnect, 2));
         }}
     }
-
-//    double x = 48.15 + 0.01*std::sin(i*pi/24)+0.1*i;
-//    double y = 20.79 + 0.01*std::cos(i*pi/24)-0.1*i;
-
-//    MarkerItem* marker = new MarkerItem(QPointF(x, y), MarkerItem::marker_observation, QDateTime::currentDateTime(), QString("Point %1").arg(i));
-//    qDebug()<< marker->position();
-
-//    //NamedCoordinate next = NamedCoordinate("Besenyő++",QGeoCoordinate(x, y));
-
-//    //marker_model.moveMarker(next);
-//    marker_model.addMarker(marker);
-//    i++;
 }
