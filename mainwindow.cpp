@@ -28,11 +28,18 @@ MainWindow::MainWindow(QWidget *parent) :
     QTimer *timer = new QTimer();
     connect(timer, &QTimer::timeout, this, &MainWindow::onTimeout);
     timer->start(refresh_time);
+
+    connect(&receiver, &Receiver::messageReceived, this, &MainWindow::handle_received_message);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::handle_received_message(MarkerItem item)
+{
+    marker_model.addMarker(new MarkerItem(item));
 }
 
 

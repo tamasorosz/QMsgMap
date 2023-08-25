@@ -16,6 +16,8 @@ struct MarkerItem{
         marker_redundant,
         marker_deleted
     };
+
+
     MarkerItem(const QPointF& pos, marker_state state, const QDateTime& when, const QString& label);
 
     const QPointF& position() const;
@@ -31,6 +33,8 @@ private:
     QString      _label;
     QDateTime    _when;
 };
+
+Q_DECLARE_METATYPE(MarkerItem)
 
 class MarkerModel : public QAbstractListModel{
     Q_OBJECT

@@ -21,6 +21,8 @@ public:
 public slots:
     void start();
     void cleanupOnExit();
+signals:
+    void messageReceived(MarkerItem item);
 private:
     AmqpClient::Channel::ptr_t m_channel; // RabbitMQ channel
     QThread* m_consumerThread; // Thread for message consumption

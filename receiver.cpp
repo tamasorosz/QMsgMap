@@ -3,7 +3,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-
 Receiver::Receiver(QObject *parent) : QObject(parent)
 {
     m_channel = AmqpClient::Channel::Create();
@@ -119,6 +118,7 @@ void Receiver::consumeMessages()
 
                 MarkerItem markerItem = parseMarkerItem(QString::fromStdString(message));
 
+                emit messageReceived(markerItem);
                 // Process markerItem as needed
                 qDebug() << "Parsed markerItem: " << markerItem.label() << " at " << markerItem.position();
 

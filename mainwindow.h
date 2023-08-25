@@ -18,6 +18,8 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+public Q_SLOTS:
+    void handle_received_message(MarkerItem item);
 private Q_SLOTS:
     void onTimeout();
 private:
