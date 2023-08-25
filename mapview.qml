@@ -17,7 +17,6 @@ Item {
             zoomLevel: 14
 
 
-
             Timer
                 {
                     id: mapRefreshtimer
@@ -46,7 +45,6 @@ Item {
                                     anchors.fill: parent
                                     onClicked: (mouse)=> {
                                         mouse.accepted = false
-                                        //marker_model.removeMarkerByLocation(mouse.x, mouse.y);
                                         marker_model.removeMarker(index)
                                     }
                                 }
