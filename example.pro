@@ -14,14 +14,12 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     markermodel.cpp \
-    receiver.cpp \
-    sender.cpp
+    receiver.cpp
 
 HEADERS += \
     mainwindow.h \
     markermodel.h \
-    receiver.h \
-    sender.h
+    receiver.h
 
 FORMS += \
     mainwindow.ui
