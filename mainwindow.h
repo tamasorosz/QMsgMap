@@ -22,6 +22,7 @@ public Q_SLOTS:
     void handle_received_message(MarkerItem item);
 private Q_SLOTS:
     void onTimeout();
+    void removeOldItems();
 private:
     Ui::MainWindow *ui;
     MarkerModel marker_model;

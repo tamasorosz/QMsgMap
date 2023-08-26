@@ -23,8 +23,8 @@ struct MarkerItem{
     const QPointF& position() const;
     QGeoCoordinate coordinate() const;
     const QString& label() const;
+    const QDateTime& when() const;
     marker_state state() const;
-
     void change_state(marker_state state);
 
 private:
@@ -58,8 +58,11 @@ public:
     void addMarker(MarkerItem* marker);
 public:
     QGeoRoute* route() const;
+
 signals:
     void routeChanged();
+public slots:
+    void removeOldItems();
 };
 
 #endif // MARKERMODEL_H

@@ -133,9 +133,6 @@ void Receiver::consumeMessages()
                 MarkerItem markerItem = parseMarkerItem(QString::fromStdString(message));
                 emit messageReceived(markerItem);
                 qDebug() << "Parsed markerItem: " << markerItem.label() << " at " << markerItem.position();
-
-
-                //m_channel->BasicAck(envelope);
             }
         } catch (const AmqpClient::ConsumerCancelledException &e) {
             qDebug() << "Consumer was cancelled: " << e.what();
@@ -148,17 +145,13 @@ void Receiver::consumeMessages()
 
 void Receiver::start()
 {
-    qDebug()<< "indulunk";
     if (!m_consumerThread) {
         m_stopConsuming = false; // Initialize the flag
         m_consumerThread = new QThread;
         moveToThread(m_consumerThread);
-        qDebug()<< "indulunk2";
         connect(m_consumerThread, &QThread::started, this, &Receiver::consumeMessages);
-        qDebug()<< "1";
 
         m_consumerThread->start();
-        qDebug()<< "started";
     }
     qDebug()<< "not started";
 }
@@ -176,6 +169,7 @@ void Receiver::stop()
 
 bool Receiver::attemptReconnect()
 {
+    stop();
     // return: status of the connection
     if (!isConnected()) {
         qDebug() << "Attempting reconnection...";

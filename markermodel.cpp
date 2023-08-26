@@ -2,6 +2,8 @@
 #include "markermodel.h"
 #include <QMetaType>
 
+const int item_lifetime = 30; //sec
+
 MarkerItem::MarkerItem(const QPointF &pos, MarkerItem::marker_state state, const QDateTime &when, const QString &label): _position(pos), _state(state), _label(label), _when(when){
 }
 
@@ -17,6 +19,11 @@ QGeoCoordinate MarkerItem::coordinate() const{
 const QString &MarkerItem::label() const{
     return _label;
 }
+
+
+const QDateTime& MarkerItem::when() const{
+    return _when;
+    }
 
 MarkerItem::marker_state MarkerItem::state() const{
     return _state;
@@ -94,3 +101,22 @@ QGeoRoute *MarkerModel::route() const{
     geo_route->setPath(coordinates);
     return geo_route;
 }
+
+void MarkerModel::removeOldItems() {
+    int removedCount = 0;
+
+    QDateTime currentTime = QDateTime::currentDateTime();
+    QDateTime thresholdTime = currentTime.addSecs(-item_lifetime);
+
+    for (int i = 0; i < _markers.size(); ++i) {
+        MarkerItem *marker = _markers[i];
+        if (marker->when() < thresholdTime) {
+            beginRemoveRows(QModelIndex(), i - removedCount, i - removedCount);
+            _markers.removeAt(i);
+            delete marker;
+            endRemoveRows();
+            ++removedCount;
+        }
+    }
+}
+

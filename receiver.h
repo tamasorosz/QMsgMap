@@ -40,7 +40,6 @@ private:
     MarkerItem parseMarkerItem(const QString &jsonString);
 
 private slots:
-    //void checkQueueForMessages();
     void consumeMessages();
 
 };

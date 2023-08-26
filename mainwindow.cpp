@@ -9,7 +9,8 @@
 #include <QThread>
 #include "markermodel.h"
 
-const int refresh_time = 3000;
+const int connection_check = 1500; //ms
+const int remove_markers = 1000;   //ms
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -23,11 +24,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->quickWidget->rootContext()->setContextProperty("marker_model", &marker_model);
     ui->quickWidget->setSource(QUrl("qrc:/mapview.qml"));
 
+    //removes the old
+    QTimer *itemlifeTimer = new QTimer();
+    connect(itemlifeTimer, &QTimer::timeout, this, &MainWindow::removeOldItems);
+    itemlifeTimer->start(remove_markers);
 
+    // checks the connection with rabbitMq
     QTimer *timer = new QTimer();
     connect(timer, &QTimer::timeout, this, &MainWindow::onTimeout);
-    timer->start(refresh_time);
-
+    timer->start(connection_check);
     connect(receiver, &Receiver::messageReceived, this, &MainWindow::handle_received_message,  Qt::QueuedConnection);
 }
 
@@ -44,16 +49,16 @@ void MainWindow::handle_received_message(MarkerItem item)
 
 void MainWindow::onTimeout()
 {
-//    // checking the connection
-//    if (receiver.isConnected()) {
-//        qDebug() << "Receiver is connected to RabbitMQ server. ";
-//        ui->label_connection_status->setText("ok");
-//        tries_to_reconnect = 1; // changing back
-//    } else
-//    {
-//        qDebug() << "Receiver is not connected to RabbitMQ server.";
-//        ui->label_connection_status->setText("reconnecting");
-//        bool status = receiver.attemptReconnect();
+    // checking the connection
+    if (receiver->isConnected()) {
+        qDebug() << "Receiver is connected to RabbitMQ server. ";
+        ui->label_connection_status->setText("ok");
+        tries_to_reconnect = 1; // changing back
+    } else
+    {
+        qDebug() << "Receiver is not connected to RabbitMQ server.";
+        ui->label_connection_status->setText("reconnecting");
+        bool status = receiver->attemptReconnect();
 
 //        if(!status){
 //        tries_to_reconnect++;
@@ -63,7 +68,12 @@ void MainWindow::onTimeout()
 //        }
 //        else{
 //        timer = new QTimer(this);
-//        timer->setInterval(refresh_time*pow(tries_to_reconnect, 2));
+//            timer->setInterval(connection_check*pow(tries_to_reconnect, 2));
 //        }}
-//    }
+    }
+}
+
+void MainWindow::removeOldItems()
+{
+    marker_model.removeOldItems();
 }
