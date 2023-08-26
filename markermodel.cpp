@@ -3,7 +3,6 @@
 #include <QMetaType>
 
 MarkerItem::MarkerItem(const QPointF &pos, MarkerItem::marker_state state, const QDateTime &when, const QString &label): _position(pos), _state(state), _label(label), _when(when){
-    //    qmlRegisterType<QGeoRoute*>();
 }
 
 const QPointF &MarkerItem::position() const{
@@ -62,7 +61,7 @@ QVariant MarkerModel::data(const QModelIndex &index, int role) const{
 }
 
 void MarkerModel::removeMarker(int index) {
-    qDebug()<<"ram klikkeltel"<<index;
+
     if (index >= 0 && index < _markers.count()) {
         beginRemoveRows(QModelIndex(), index, index);
         delete _markers.takeAt(index);

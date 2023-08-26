@@ -27,7 +27,7 @@ private:
     MarkerModel marker_model;
     int i = 0;
     int tries_to_reconnect = 1;
-    Receiver receiver;
+    Receiver *receiver;
     QTimer *timer;
 };
 

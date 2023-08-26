@@ -2,19 +2,22 @@
 #include <QMessageBox>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QThreadPool>
+
+const QString exchangeName = "positions";
+const QString queueName = "receiver_queue"; // Use the same queue name as in your C++ code
+const QString routingKey = exchangeName;
 
 Receiver::Receiver(QObject *parent) : QObject(parent)
 {
-    //m_channel = AmqpClient::Channel::Create();
-    //connect(this, &QObject::destroyed, this, &Receiver::cleanupOnExit);
-    // Connect to RabbitMQ server
+    // Connect to RabbitMq server
     std::string hostname = "localhost";
     int port = 5672;
     std::string username = "guest";
     std::string password = "guest";
+    m_consumerThread = nullptr;
 
-    AmqpClient::Channel::ptr_t connectionChannel = AmqpClient::Channel::Create(hostname, port, username, password);
-    m_channel = connectionChannel;
+    m_channel = AmqpClient::Channel::Create(hostname, port, username, password);
 
     connect(this, &QObject::destroyed, this, &Receiver::cleanupOnExit);
 }
@@ -48,15 +51,9 @@ bool Receiver::declareQueue()
 {
     try {
         if (m_channel) {
-            qDebug() << "Declaring...";
-            std::string exchangeName = "positions";
-            // Declare a named queue
-            std::string queueName = "homework";
-            m_channel->DeclareQueue(queueName, false, true, false, false);
-
-            // Bind the queue to the exchange
-            m_channel->BindQueue(queueName, exchangeName, queueName);
-
+            m_channel->DeclareExchange(exchangeName.toStdString(), AmqpClient::Channel::EXCHANGE_TYPE_DIRECT, false, false, false);
+            m_channel->DeclareQueue(queueName.toStdString(), false, true, false, false);
+            m_channel->BindQueue(queueName.toStdString(), exchangeName.toStdString(), exchangeName.toStdString());
             return true;
         } else {
             qDebug() << "Channel is not valid.";
@@ -109,7 +106,7 @@ MarkerItem Receiver::parseMarkerItem(const QString &jsonString)
     double lon = lonValue.toDouble();
     double lat = latValue.toDouble();
 
-    QPointF position(lon, lat);
+    QPointF position(lat, lon);
     MarkerItem::marker_state state = MarkerItem::marker_observation; // Set the appropriate state
     QDateTime when = QDateTime::currentDateTime(); // Set the appropriate time
     QString label = name;
@@ -124,22 +121,21 @@ MarkerItem Receiver::parseMarkerItem(const QString &jsonString)
 void Receiver::consumeMessages()
 {
     AmqpClient::Envelope::ptr_t envelope;
-    while (true)
+    while (!m_stopConsuming)
     {
         try {
             if (declareQueue()) {
-                std::string consumer_tag = m_channel->BasicConsume("", "", true, false, false);
+                std::string consumer_tag = m_channel->BasicConsume(queueName.toStdString(), "", true, false, false);
                 envelope = m_channel->BasicConsumeMessage(consumer_tag);
                 std::string message = envelope->Message()->Body();
                 qDebug() << "Received message: " << QString::fromStdString(message);
 
                 MarkerItem markerItem = parseMarkerItem(QString::fromStdString(message));
-
                 emit messageReceived(markerItem);
-
                 qDebug() << "Parsed markerItem: " << markerItem.label() << " at " << markerItem.position();
 
-                m_channel->BasicAck(envelope);
+
+                //m_channel->BasicAck(envelope);
             }
         } catch (const AmqpClient::ConsumerCancelledException &e) {
             qDebug() << "Consumer was cancelled: " << e.what();
@@ -152,12 +148,29 @@ void Receiver::consumeMessages()
 
 void Receiver::start()
 {
+    qDebug()<< "indulunk";
     if (!m_consumerThread) {
+        m_stopConsuming = false; // Initialize the flag
         m_consumerThread = new QThread;
         moveToThread(m_consumerThread);
+        qDebug()<< "indulunk2";
         connect(m_consumerThread, &QThread::started, this, &Receiver::consumeMessages);
+        qDebug()<< "1";
 
         m_consumerThread->start();
+        qDebug()<< "started";
+    }
+    qDebug()<< "not started";
+}
+
+void Receiver::stop()
+{
+    if (m_consumerThread) {
+        m_stopConsuming = true; // Set the flag to stop consuming
+        m_consumerThread->quit();
+        m_consumerThread->wait();
+        delete m_consumerThread;
+        m_consumerThread = nullptr;
     }
 }
 
@@ -182,7 +195,7 @@ bool Receiver::deleteQueue()
 {
     try {
         if (m_channel) {
-            m_channel->DeleteQueue("homework");
+            m_channel->DeleteQueue(queueName.toStdString());
             return true;
         } else {
             qDebug() << "Channel is not valid.";
@@ -210,4 +223,3 @@ void Receiver::cleanupOnExit()
         m_isCleaningUp = false; // Reset the flag
     }
 }
-

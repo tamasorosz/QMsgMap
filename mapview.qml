@@ -21,7 +21,7 @@ Item {
                 {
                     id: mapRefreshtimer
                     running: true
-                    interval: 300
+                    interval: 3000
                     repeat: true
                     onTriggered:
                     {
