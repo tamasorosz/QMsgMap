@@ -19,8 +19,6 @@ public:
     ~Receiver();
     bool isConnected() const;
     bool attemptReconnect();
-    int getMessageCount(const std::string& queueName);
-    void initConnection();
 
 public slots:
     void start();
@@ -43,10 +41,8 @@ private:
 
     AmqpClient::Channel::ptr_t* m_channel;
     QThread *m_consumerThread;
-    QTimer *m_checkTimer;
     bool m_isCleaningUp;
     QMutex m_flagMutex;
-    QWaitCondition m_reconnectCondition;
     bool m_stopConsuming;
     bool declareQueue();
     MarkerItem parseMarkerItem(const QString &jsonString);
