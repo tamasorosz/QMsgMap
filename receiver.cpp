@@ -142,17 +142,18 @@ void Receiver::consumeMessages()
         while (true)
         {
             try {
-                    qDebug() << "consume message" << m_stopConsuming;
                     if (declareQueue()) {
                         std::string consumer_tag = (*m_channel)->BasicConsume(queueName.toStdString(), "", true, false, false);
                         envelope = (*m_channel)->BasicConsumeMessage(consumer_tag);
+
                         std::string message = envelope->Message()->Body();
-                        qDebug() << "Received message: " << QString::fromStdString(message);
 
                         MarkerItem markerItem = parseMarkerItem(QString::fromStdString(message));
                         emit messageReceived(markerItem);
+
                         qDebug() << "Parsed markerItem: " << markerItem.label() << " at " << markerItem.position();
                         m_stopConsuming = false;
+                        reconnectionCounter = 1;
                     }
             } catch (const AmqpClient::ConsumerCancelledException &e) {
                     qDebug() << "Consumer was cancelled: " << e.what();
@@ -164,9 +165,10 @@ void Receiver::consumeMessages()
             }
 
             if (m_stopConsuming){
-                qDebug() <<"asdd";
+
                 attemptReconnect();
-                QThread::sleep(1);}
+                reconnectionCounter *= 3; // 1, 3, 9, 27 secs for reconnecting
+                QThread::sleep(reconnectionCounter);}
         }
 }
 
@@ -180,14 +182,11 @@ void Receiver::start()
     moveToThread(m_consumerThread);
     connect(m_consumerThread, &QThread::started, this, &Receiver::consumeMessages);
     m_consumerThread->start();
-    qDebug()<< "started";
 }
 
 
 bool Receiver::attemptReconnect()
 {
-    // return: status of the connection
-
     qDebug() << "Attempting reconnection...";
     try {
         //hostname, port, username, password
@@ -207,13 +206,6 @@ void Receiver::cleanupOnExit()
 {
     if (!m_isCleaningUp) {
         m_isCleaningUp = true; // Set the flag to prevent recursive cleanup
-
-        //deleteQueue();
-        // Delete the channel if it's not null
-//        if (m_channel) {
-//            m_channel.reset(); // Automatically closes the channel when the object is destroyed
-//            qDebug() << "Channel deleted.";
-//        }
         delete m_channel;
         m_isCleaningUp = false; // Reset the flag
     }
