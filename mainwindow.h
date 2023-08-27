@@ -30,6 +30,7 @@ private:
     int tries_to_reconnect = 1;
     Receiver *receiver;
     QTimer *timer;
+    bool connectionStatus;
 };
 
 #endif // MAINWINDOW_H

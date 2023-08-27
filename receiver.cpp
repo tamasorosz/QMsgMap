@@ -3,42 +3,60 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QThreadPool>
+#include <QMutex>
+
+// Connect to RabbitMq server
+const std::string hostname = "localhost";
+const int port = 5672;
+const std::string username = "guest";
+const std::string password = "guest";
 
 const QString exchangeName = "positions";
 const QString queueName = "receiver_queue"; // Use the same queue name as in your C++ code
 const QString routingKey = exchangeName;
 
-Receiver::Receiver(QObject *parent) : QObject(parent)
+Receiver::Receiver(QObject *parent) : QObject(parent), m_isCleaningUp(false), m_consumerThread(nullptr)
 {
-    // Connect to RabbitMq server
-    std::string hostname = "localhost";
-    int port = 5672;
-    std::string username = "guest";
-    std::string password = "guest";
-    m_consumerThread = nullptr;
 
-    m_channel = AmqpClient::Channel::Create(hostname, port, username, password);
-
+    //initConnection();
+    //m_channel = AmqpClient::Channel::Create(hostname, port, username, password);
+    m_channel = new AmqpClient::Channel::ptr_t(AmqpClient::Channel::Create(hostname, port, username, password));
     connect(this, &QObject::destroyed, this, &Receiver::cleanupOnExit);
+    start();
 }
 
 Receiver::~Receiver()
 {
     cleanupOnExit();
-    if (m_consumerThread) {
-        m_consumerThread->quit();
-        m_consumerThread->wait();
+    m_consumerThread->quit();
+    m_consumerThread->wait();
+    delete m_channel;
+//    if (m_consumerThread) {
+//        m_consumerThread->quit();
+//        m_consumerThread->wait();
 
-        delete m_consumerThread;
-        m_consumerThread = nullptr;
-    }
+//        delete m_consumerThread;
+//        m_consumerThread = nullptr;
+//    }
 }
+
+
+
+//void Receiver::initConnection()
+//{
+//        AmqpClient::Channel::ptr_t temp_channel = AmqpClient::Channel::Create(hostname, port, username, password);
+//        {
+//            m_channel = temp_channel;
+//        }
+//}
+
 
 bool Receiver::isConnected() const
 {
+    // Declare a temporary queue
     try {
         AmqpClient::Channel::ptr_t tempChannel = AmqpClient::Channel::Create();
-        // Declare a temporary queue
+
         tempChannel->DeclareQueue("temp_queue", false, false, false, false);
         tempChannel->DeleteQueue("temp_queue"); // Delete the temporary queue
         return true; // If no exception, consider connected
@@ -50,15 +68,15 @@ bool Receiver::isConnected() const
 bool Receiver::declareQueue()
 {
     try {
-        if (m_channel) {
-            m_channel->DeclareExchange(exchangeName.toStdString(), AmqpClient::Channel::EXCHANGE_TYPE_DIRECT, false, false, false);
-            m_channel->DeclareQueue(queueName.toStdString(), false, true, false, false);
-            m_channel->BindQueue(queueName.toStdString(), exchangeName.toStdString(), exchangeName.toStdString());
-            return true;
-        } else {
-            qDebug() << "Channel is not valid.";
-            return false;
-        }
+        if (*m_channel) {
+
+            (*m_channel)->DeclareExchange(exchangeName.toStdString(), AmqpClient::Channel::EXCHANGE_TYPE_DIRECT, false, false, false);
+            (*m_channel)->DeclareQueue(queueName.toStdString(), false, true, false, false);
+            (*m_channel)->BindQueue(queueName.toStdString(), exchangeName.toStdString(), routingKey.toStdString());
+
+            qDebug()<<"declared";
+            return true;}
+
     } catch (const std::exception &e) {
         qDebug() << "Error creating queue: " << e.what();
         return false;
@@ -117,89 +135,72 @@ MarkerItem Receiver::parseMarkerItem(const QString &jsonString)
 }
 
 
-
 void Receiver::consumeMessages()
 {
     AmqpClient::Envelope::ptr_t envelope;
-    while (!m_stopConsuming)
-    {
-        try {
-            if (declareQueue()) {
-                std::string consumer_tag = m_channel->BasicConsume(queueName.toStdString(), "", true, false, false);
-                envelope = m_channel->BasicConsumeMessage(consumer_tag);
-                std::string message = envelope->Message()->Body();
-                qDebug() << "Received message: " << QString::fromStdString(message);
 
-                MarkerItem markerItem = parseMarkerItem(QString::fromStdString(message));
-                emit messageReceived(markerItem);
-                qDebug() << "Parsed markerItem: " << markerItem.label() << " at " << markerItem.position();
+        while (true)
+        {
+            try {
+                    qDebug() << "consume message" << m_stopConsuming;
+                    if (declareQueue()) {
+                        std::string consumer_tag = (*m_channel)->BasicConsume(queueName.toStdString(), "", true, false, false);
+                        envelope = (*m_channel)->BasicConsumeMessage(consumer_tag);
+                        std::string message = envelope->Message()->Body();
+                        qDebug() << "Received message: " << QString::fromStdString(message);
+
+                        MarkerItem markerItem = parseMarkerItem(QString::fromStdString(message));
+                        emit messageReceived(markerItem);
+                        qDebug() << "Parsed markerItem: " << markerItem.label() << " at " << markerItem.position();
+                        m_stopConsuming = false;
+                    }
+            } catch (const AmqpClient::ConsumerCancelledException &e) {
+                    qDebug() << "Consumer was cancelled: " << e.what();
+                    m_stopConsuming = true;
+                    // Handle this case as needed, e.g., reconnect or exit the loop
+            } catch (const std::exception &e) {
+                    qDebug() << "Error: " << e.what();
+                    m_stopConsuming = true;
             }
-        } catch (const AmqpClient::ConsumerCancelledException &e) {
-            qDebug() << "Consumer was cancelled: " << e.what();
-            // Handle this case as needed, e.g., reconnect or exit the loop
-        } catch (const std::exception &e) {
-            qDebug() << "Error: " << e.what();
+
+            if (m_stopConsuming){
+                qDebug() <<"asdd";
+                attemptReconnect();
+                QThread::sleep(1);}
         }
-    }
 }
+
 
 void Receiver::start()
 {
-    if (!m_consumerThread) {
-        m_stopConsuming = false; // Initialize the flag
-        m_consumerThread = new QThread;
-        moveToThread(m_consumerThread);
-        connect(m_consumerThread, &QThread::started, this, &Receiver::consumeMessages);
 
-        m_consumerThread->start();
-    }
-    qDebug()<< "not started";
+
+    m_stopConsuming = false; // Initialize the flag
+    m_consumerThread = new QThread;
+    moveToThread(m_consumerThread);
+    connect(m_consumerThread, &QThread::started, this, &Receiver::consumeMessages);
+    m_consumerThread->start();
+    qDebug()<< "started";
 }
 
-void Receiver::stop()
-{
-    if (m_consumerThread) {
-        m_stopConsuming = true; // Set the flag to stop consuming
-        m_consumerThread->quit();
-        m_consumerThread->wait();
-        delete m_consumerThread;
-        m_consumerThread = nullptr;
-    }
-}
 
 bool Receiver::attemptReconnect()
 {
-    stop();
     // return: status of the connection
-    if (!isConnected()) {
-        qDebug() << "Attempting reconnection...";
-        try {
-            m_channel = AmqpClient::Channel::Create();
-            start();
-            qDebug() << "Reconnection successful!";
-        } catch (const std::exception &e) {
-            qDebug() << "Reconnection failed: " << e.what();
-            return false;
-        }
-    }
-    return true;
-}
 
-bool Receiver::deleteQueue()
-{
+    qDebug() << "Attempting reconnection...";
     try {
-        if (m_channel) {
-            m_channel->DeleteQueue(queueName.toStdString());
-            return true;
-        } else {
-            qDebug() << "Channel is not valid.";
-            return false;
-        }
+        //hostname, port, username, password
+        m_channel = new AmqpClient::Channel::ptr_t(AmqpClient::Channel::Create(hostname, port, username, password));
+
+        qDebug() << "Reconnection successful!";
     } catch (const std::exception &e) {
-        qDebug() << "Error deleting queue: " << e.what();
-        QMessageBox::critical(nullptr, "Error", QString("Error deleting queue: %1").arg(e.what()));
+        qDebug() << "Reconnection failed: " << e.what();
         return false;
     }
+
+
+    return true;
 }
 
 void Receiver::cleanupOnExit()
@@ -207,13 +208,13 @@ void Receiver::cleanupOnExit()
     if (!m_isCleaningUp) {
         m_isCleaningUp = true; // Set the flag to prevent recursive cleanup
 
-        deleteQueue();
+        //deleteQueue();
         // Delete the channel if it's not null
-        if (m_channel) {
-            m_channel.reset(); // Automatically closes the channel when the object is destroyed
-            qDebug() << "Channel deleted.";
-        }
-
+//        if (m_channel) {
+//            m_channel.reset(); // Automatically closes the channel when the object is destroyed
+//            qDebug() << "Channel deleted.";
+//        }
+        delete m_channel;
         m_isCleaningUp = false; // Reset the flag
     }
 }

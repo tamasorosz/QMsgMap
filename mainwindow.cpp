@@ -9,7 +9,7 @@
 #include <QThread>
 #include "markermodel.h"
 
-const int connection_check = 1500; //ms
+const int connection_check = 100; //ms
 const int remove_markers = 1000;   //ms
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -17,7 +17,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     Receiver *receiver = new Receiver();
-    receiver->start();
+    connectionStatus = receiver->isConnected();
+    //receiver->start();
 
     ui->setupUi(this);
 
@@ -50,16 +51,14 @@ void MainWindow::handle_received_message(MarkerItem item)
 void MainWindow::onTimeout()
 {
     // checking the connection
-    if (receiver->isConnected()) {
-        qDebug() << "Receiver is connected to RabbitMQ server. ";
+    if (receiver->isConnected() and connectionStatus) {
         ui->label_connection_status->setText("ok");
         tries_to_reconnect = 1; // changing back
     } else
     {
         qDebug() << "Receiver is not connected to RabbitMQ server.";
         ui->label_connection_status->setText("reconnecting");
-        bool status = receiver->attemptReconnect();
-
+        //connectionStatus = receiver->attemptReconnect();
 //        if(!status){
 //        tries_to_reconnect++;
 //        ui->label_connection_status->setText("connection lost...");
