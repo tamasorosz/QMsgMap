@@ -35,6 +35,7 @@ RESOURCES += \
 
 LIBS += -L./libs -lSimpleAmqpClient
 
-DISTFILES += libs/libSimpleAmqpClient.so.7
+DISTFILES += libs/libSimpleAmqpClient.so.7 \
+    README.md
 QMAKE_POST_LINK += mkdir -p $$OUT_PWD/libs && cp $$PWD/libs/libSimpleAmqpClient.so.7 $$OUT_PWD/libs/libSimpleAmqpClient.so.7
 
