@@ -4,7 +4,7 @@
 
 const int item_lifetime = 30; //sec
 
-MarkerItem::MarkerItem(const QPointF &pos, MarkerItem::marker_state state, const QDateTime &when, const QString &label): _position(pos), _state(state), _label(label), _when(when){
+MarkerItem::MarkerItem(const QPointF &pos, const QDateTime &when, const QString &label): _position(pos), _label(label), _when(when){
 }
 
 const QPointF &MarkerItem::position() const{
@@ -25,13 +25,7 @@ const QDateTime& MarkerItem::when() const{
     return _when;
     }
 
-MarkerItem::marker_state MarkerItem::state() const{
-    return _state;
-}
 
-void MarkerItem::change_state(MarkerItem::marker_state state){
-    _state = state;
-}
 
 MarkerModel::MarkerModel(QObject *parent): QAbstractListModel(parent){
 
@@ -50,17 +44,6 @@ QVariant MarkerModel::data(const QModelIndex &index, int role) const{
 
     if(role == int(PositionRole)){
         return _markers.at(index.row())->position();
-    }else if(role == int(StateRole)){
-        switch(_markers.at(index.row())->state()){
-        case MarkerItem::marker_important:
-            return "important";
-        case MarkerItem::marker_observation:
-            return "observation";
-        case MarkerItem::marker_redundant:
-            return "redundant";
-        case MarkerItem::marker_deleted:
-            return "deleted";
-        }
     }else if(role == int(LabelRole)){
         return _markers.at(index.row())->label();
     }
@@ -80,7 +63,6 @@ void MarkerModel::removeMarker(int index) {
 QHash<int, QByteArray> MarkerModel::roleNames() const{
     QHash<int, QByteArray> roles;
     roles[PositionRole] = "position";
-    roles[StateRole]    = "status";
     roles[LabelRole]    = "label";
     return roles;
 }
@@ -92,15 +74,6 @@ void MarkerModel::addMarker(MarkerItem *marker){
     endInsertRows();
 }
 
-QGeoRoute *MarkerModel::route() const{
-    QGeoRoute* geo_route = new QGeoRoute;
-    QList<QGeoCoordinate> coordinates;
-    foreach(MarkerItem* marker, _markers){
-        coordinates.push_back(marker->coordinate());
-    }
-    geo_route->setPath(coordinates);
-    return geo_route;
-}
 
 void MarkerModel::removeOldItems() {
     int removedCount = 0;

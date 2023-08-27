@@ -42,8 +42,7 @@ private:
     AmqpClient::Channel::ptr_t* m_channel;
     QThread *m_consumerThread;
     bool m_isCleaningUp;
-    QMutex m_flagMutex;
-    bool m_stopConsuming;
+    bool m_disConnected;
     bool declareQueue();
     MarkerItem parseMarkerItem(const QString &jsonString);
     int reconnectionCounter=1;

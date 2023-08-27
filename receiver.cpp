@@ -3,10 +3,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QThreadPool>
-#include <QMutex>
+//#include <QMutex>
 
 
-Receiver::Receiver(QObject *parent) : QObject(parent)//, m_isCleaningUp(false), m_consumerThread(nullptr)
+Receiver::Receiver(QObject *parent) : QObject(parent)
 {
     m_channel = new AmqpClient::Channel::ptr_t(AmqpClient::Channel::Create(hostname, port, username, password));
     connect(this, &QObject::destroyed, this, &Receiver::cleanupOnExit);
@@ -39,7 +39,6 @@ bool Receiver::declareQueue()
 {
     try {
         if (*m_channel) {
-
             (*m_channel)->DeclareExchange(exchangeName, AmqpClient::Channel::EXCHANGE_TYPE_DIRECT, false, false, false);
             (*m_channel)->DeclareQueue(queueName, false, true, false, false);
             (*m_channel)->BindQueue(queueName, exchangeName, routingKey);
@@ -54,7 +53,7 @@ bool Receiver::declareQueue()
 
 MarkerItem Receiver::parseMarkerItem(const QString &jsonString)
 {
-    MarkerItem markerItem(QPointF(0, 0), MarkerItem::marker_observation, QDateTime::currentDateTime(), "");
+    MarkerItem markerItem(QPointF(0, 0), QDateTime::currentDateTime(), "");
 
     QJsonDocument jsonDoc;
     QJsonParseError parseError;
@@ -94,11 +93,10 @@ MarkerItem Receiver::parseMarkerItem(const QString &jsonString)
     double lat = latValue.toDouble();
 
     QPointF position(lat, lon);
-    MarkerItem::marker_state state = MarkerItem::marker_observation; // Set the appropriate state
     QDateTime when = QDateTime::currentDateTime(); // Set the appropriate time
     QString label = name;
 
-    markerItem = MarkerItem(position, state, when, label);
+    markerItem = MarkerItem(position, when, label);
 
     return markerItem;
 }
@@ -121,20 +119,20 @@ void Receiver::consumeMessages()
                         emit messageReceived(markerItem);
 
                         qDebug() << "Parsed markerItem: " << markerItem.label() << " at " << markerItem.position();
-                        m_stopConsuming = false;
+                        m_disConnected = false;
                         reconnectionCounter = 1;
                     }
             } catch (const AmqpClient::ConsumerCancelledException &e) {
                     qDebug() << "Consumer was cancelled: " << e.what();
-                    m_stopConsuming = true;
+                    m_disConnected = true;
                     // Handle this case as needed, e.g., reconnect or exit the loop
             } catch (const std::exception &e) {
                     qDebug() << "Error: " << e.what();
-                    m_stopConsuming = true;
+                    m_disConnected = true;
             }
 
-            if (m_stopConsuming){
-                reconnectionCounter *= 2;  // 1, 2, 4, 8, ... secs for reconnecting
+            if (m_disConnected){
+                reconnectionCounter *= 1.73;  // 1, 1.73, 3, 6, ... secs for reconnecting
                 QThread::sleep(reconnectionCounter);
                 attemptReconnect();
 
@@ -145,9 +143,7 @@ void Receiver::consumeMessages()
 
 void Receiver::start()
 {
-
-
-    m_stopConsuming = false; // Initialize the flag
+    m_disConnected = false; // Initialize the flag
     m_consumerThread = new QThread;
     moveToThread(m_consumerThread);
     connect(m_consumerThread, &QThread::started, this, &Receiver::consumeMessages);
