@@ -5,17 +5,8 @@
 #include <QThreadPool>
 #include <QMutex>
 
-// Connect to RabbitMq server
-const std::string hostname = "localhost";
-const int port = 5672;
-const std::string username = "guest";
-const std::string password = "guest";
 
-const  std::string exchangeName = "positions";
-const  std::string queueName = "receiver_queue"; // Use the same queue name as in your C++ code
-const  std::string routingKey = exchangeName;
-
-Receiver::Receiver(QObject *parent) : QObject(parent), m_isCleaningUp(false), m_consumerThread(nullptr)
+Receiver::Receiver(QObject *parent) : QObject(parent)//, m_isCleaningUp(false), m_consumerThread(nullptr)
 {
     m_channel = new AmqpClient::Channel::ptr_t(AmqpClient::Channel::Create(hostname, port, username, password));
     connect(this, &QObject::destroyed, this, &Receiver::cleanupOnExit);
@@ -27,7 +18,7 @@ Receiver::~Receiver()
     cleanupOnExit();
     m_consumerThread->quit();
     m_consumerThread->wait();
-    delete m_channel;
+    //delete m_channel;
 }
 
 
@@ -52,12 +43,13 @@ bool Receiver::declareQueue()
             (*m_channel)->DeclareExchange(exchangeName, AmqpClient::Channel::EXCHANGE_TYPE_DIRECT, false, false, false);
             (*m_channel)->DeclareQueue(queueName, false, true, false, false);
             (*m_channel)->BindQueue(queueName, exchangeName, routingKey);
-            return true;}
+            }
 
     } catch (const std::exception &e) {
         qDebug() << "Error creating queue: " << e.what();
         return false;
     }
+    return true;
 }
 
 MarkerItem Receiver::parseMarkerItem(const QString &jsonString)
@@ -142,10 +134,11 @@ void Receiver::consumeMessages()
             }
 
             if (m_stopConsuming){
-
+                reconnectionCounter *= 2;  // 1, 2, 4, 8, ... secs for reconnecting
+                QThread::sleep(reconnectionCounter);
                 attemptReconnect();
-                reconnectionCounter *= 3; // 1, 3, 9, 27 secs for reconnecting
-                QThread::sleep(reconnectionCounter);}
+
+                }
         }
 }
 
