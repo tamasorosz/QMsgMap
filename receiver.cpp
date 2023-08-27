@@ -11,15 +11,12 @@ const int port = 5672;
 const std::string username = "guest";
 const std::string password = "guest";
 
-const QString exchangeName = "positions";
-const QString queueName = "receiver_queue"; // Use the same queue name as in your C++ code
-const QString routingKey = exchangeName;
+const  std::string exchangeName = "positions";
+const  std::string queueName = "receiver_queue"; // Use the same queue name as in your C++ code
+const  std::string routingKey = exchangeName;
 
 Receiver::Receiver(QObject *parent) : QObject(parent), m_isCleaningUp(false), m_consumerThread(nullptr)
 {
-
-    //initConnection();
-    //m_channel = AmqpClient::Channel::Create(hostname, port, username, password);
     m_channel = new AmqpClient::Channel::ptr_t(AmqpClient::Channel::Create(hostname, port, username, password));
     connect(this, &QObject::destroyed, this, &Receiver::cleanupOnExit);
     start();
@@ -31,37 +28,19 @@ Receiver::~Receiver()
     m_consumerThread->quit();
     m_consumerThread->wait();
     delete m_channel;
-//    if (m_consumerThread) {
-//        m_consumerThread->quit();
-//        m_consumerThread->wait();
-
-//        delete m_consumerThread;
-//        m_consumerThread = nullptr;
-//    }
 }
-
-
-
-//void Receiver::initConnection()
-//{
-//        AmqpClient::Channel::ptr_t temp_channel = AmqpClient::Channel::Create(hostname, port, username, password);
-//        {
-//            m_channel = temp_channel;
-//        }
-//}
 
 
 bool Receiver::isConnected() const
 {
-    // Declare a temporary queue
     try {
         AmqpClient::Channel::ptr_t tempChannel = AmqpClient::Channel::Create();
 
         tempChannel->DeclareQueue("temp_queue", false, false, false, false);
         tempChannel->DeleteQueue("temp_queue"); // Delete the temporary queue
-        return true; // If no exception, consider connected
+        return true;
     } catch (...) {
-        return false; // Exception indicates not connected
+        return false;
     }
 }
 
@@ -70,11 +49,9 @@ bool Receiver::declareQueue()
     try {
         if (*m_channel) {
 
-            (*m_channel)->DeclareExchange(exchangeName.toStdString(), AmqpClient::Channel::EXCHANGE_TYPE_DIRECT, false, false, false);
-            (*m_channel)->DeclareQueue(queueName.toStdString(), false, true, false, false);
-            (*m_channel)->BindQueue(queueName.toStdString(), exchangeName.toStdString(), routingKey.toStdString());
-
-            qDebug()<<"declared";
+            (*m_channel)->DeclareExchange(exchangeName, AmqpClient::Channel::EXCHANGE_TYPE_DIRECT, false, false, false);
+            (*m_channel)->DeclareQueue(queueName, false, true, false, false);
+            (*m_channel)->BindQueue(queueName, exchangeName, routingKey);
             return true;}
 
     } catch (const std::exception &e) {
@@ -143,7 +120,7 @@ void Receiver::consumeMessages()
         {
             try {
                     if (declareQueue()) {
-                        std::string consumer_tag = (*m_channel)->BasicConsume(queueName.toStdString(), "", true, false, false);
+                        std::string consumer_tag = (*m_channel)->BasicConsume(queueName, "", true, false, false);
                         envelope = (*m_channel)->BasicConsumeMessage(consumer_tag);
 
                         std::string message = envelope->Message()->Body();
@@ -189,17 +166,12 @@ bool Receiver::attemptReconnect()
 {
     qDebug() << "Attempting reconnection...";
     try {
-        //hostname, port, username, password
-        m_channel = new AmqpClient::Channel::ptr_t(AmqpClient::Channel::Create(hostname, port, username, password));
-
-        qDebug() << "Reconnection successful!";
+        m_channel = new AmqpClient::Channel::ptr_t(AmqpClient::Channel::Create(hostname, port, username, password));    
+        return true;
     } catch (const std::exception &e) {
         qDebug() << "Reconnection failed: " << e.what();
         return false;
     }
-
-
-    return true;
 }
 
 void Receiver::cleanupOnExit()
