@@ -3,7 +3,6 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QThreadPool>
-//#include <QMutex>
 
 
 Receiver::Receiver(QObject *parent) : QObject(parent)
@@ -132,7 +131,7 @@ void Receiver::consumeMessages()
             }
 
             if (m_disConnected){
-                reconnectionCounter *= 1.73;  // 1, 1.73, 3, 6, ... secs for reconnecting
+                reconnectionCounter *= 2;  // 1, 4, 8, 16, ... secs for reconnecting
                 QThread::sleep(reconnectionCounter);
                 attemptReconnect();
 

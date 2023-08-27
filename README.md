@@ -46,12 +46,17 @@ cities_hawaii = [
 ]
 ```
 
+The lifetime of the points was set back to 5 minutes, and the map autifit refreshment time also set back to 5 seconds.
+
 # Installation instructions
 
 The code was developed and tested with Qt 6.5.2 on Ubuntu 22.04 system. 
 Running the application needs an installed and running rabbitmq server.
 The application uses a third party code to connect  [SimpleAmqpClient](https://github.com/alanxz/SimpleAmqpClient)
 to establish the rabbitmq connection.
+
+The application is looking for a 'direct' exchange, named 'positions', the routing-key was set to the exchangename, as it can be seen in the demo code below.
+
 
 ### Pre-requisites
 +  [boost-1.47.0](http://www.boost.org/) or newer (uses chrono, system internally in addition to other header based libraries such as sharedptr and noncopyable)
