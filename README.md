@@ -144,3 +144,11 @@ for data in cities_hawaii:
 # Close the connection
 connection.close()
 ```
+
+License
+-------
+
+This project is licensed under the MIT License.
+See LICENSE file for details.
+
+Third-party components are listed in THIRD_PARTY_NOTICES.md.
