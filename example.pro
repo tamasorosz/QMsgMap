@@ -1,41 +1,40 @@
-QT       += core gui quickwidgets positioning network location
-
+QT += core gui quickwidgets positioning network location
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
 TEMPLATE = app
 CONFIG += c++17
 
-QMAKE_LFLAGS += -Wl,-rpath,$${PWD}\libs
-
-# You can make your code fail to compile if it uses deprecated APIs.
-# In order to do so, uncomment the following line.
-#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-
+# --- Sources / headers ---
 SOURCES += \
-    main.cpp \
-    mainwindow.cpp \
-    markermodel.cpp \
-    receiver.cpp
+    src/main.cpp \
+    src/mainwindow.cpp \
+    src/markermodel.cpp \
+    src/receiver.cpp
 
 HEADERS += \
-    mainwindow.h \
-    markermodel.h \
-    receiver.h
+    src/mainwindow.h \
+    src/markermodel.h \
+    src/receiver.h
 
 FORMS += \
-    mainwindow.ui
+    ui/mainwindow.ui
 
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
-
+# --- Resources (QML + images should be listed inside resources/resources.qrc) ---
 RESOURCES += \
-    resources.qrc
+    resources/resources.qrc
 
+# --- 3rd-party libs ---
+LIBS += -L$$PWD/libs -lSimpleAmqpClient
 
-LIBS += -L./libs -lSimpleAmqpClient
+# Linux: add rpath so the app can find libs next to the binary (build/run convenience)
+unix:!macx: QMAKE_LFLAGS += -Wl,-rpath,'$$ORIGIN/libs'
 
-DISTFILES += libs/libSimpleAmqpClient.so.7 \
+# Optional: copy the runtime .so next to the built binary (only if you really ship it)
+unix:!android {
+    QMAKE_POST_LINK += mkdir -p $$OUT_PWD/libs && \
+                       cp -f $$PWD/libs/libSimpleAmqpClient.so.7 $$OUT_PWD/libs/
+}
+
+# Keep distfiles for docs only (avoid committing .so if possible)
+DISTFILES += \
     README.md
-QMAKE_POST_LINK += mkdir -p $$OUT_PWD/libs && cp $$PWD/libs/libSimpleAmqpClient.so.7 $$OUT_PWD/libs/libSimpleAmqpClient.so.7
-
