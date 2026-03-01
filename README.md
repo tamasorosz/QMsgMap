@@ -66,7 +66,7 @@ The application is looking for a 'direct' exchange, named 'positions', the routi
 +  [SimpleAmqpClient](https://github.com/alanxz/SimpleAmqpClient)
 
 
-After succesfully compiling the [SimpleAmqpClient](https://github.com/alanxz/SimpleAmqpClient) on the system, the
+After successfully compiling the [SimpleAmqpClient](https://github.com/alanxz/SimpleAmqpClient) on the system, the
 generated .so files should be copied under the projects '/lib'. The qml file waits them and wants to copy the libSimpleAmqpClient.so.7 to the deployed application, as well. 
 
 
