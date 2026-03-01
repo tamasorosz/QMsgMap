@@ -1,4 +1,6 @@
 ## QMsgMap
+![License](https://img.shields.io/badge/license-MIT-green)
+![CMake](https://img.shields.io/badge/build-CMake-blue)
 
 A simple C++/Qt application that displays a map and connects to a RabbitMQ exchange.
 

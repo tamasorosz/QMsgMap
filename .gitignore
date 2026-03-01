@@ -1,4 +1,21 @@
+# Qt Creator / IDE user files
+*.pro.user*
+*.user*
+CMakeLists.txt.user*
+
+# Build outputs
+build*/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+Makefile
+*.cmake
+compile_commands.json
+
+# Binaries / libs
+*.so
+*.so.*
+*.a
+*.dll
+*.dylib
 example.zip
-build
-example.pro.user
-libs
