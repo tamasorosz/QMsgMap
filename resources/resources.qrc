@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/">
-        <file>mapview.qml</file>
-        <file>marker.png</file>
+        <file>qml/mapview.qml</file>
+        <file>images/marker.png</file>
     </qresource>
 </RCC>

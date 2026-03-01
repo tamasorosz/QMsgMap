@@ -9,20 +9,38 @@
 #include <QGeoCoordinate>
 #include <QAbstractListModel>
 
-struct MarkerItem{
 
-    MarkerItem(const QPointF& pos, const QDateTime& when, const QString& label);
+struct MarkerItem {
+    MarkerItem() = default; // kell a Qt metatype-nak
+
+    MarkerItem(const QPointF& pos,
+               const QDateTime& when,
+               const QString& label);
 
     const QPointF& position() const;
     QGeoCoordinate coordinate() const;
     const QString& label() const;
     const QDateTime& when() const;
 
-private:
-    QPointF      _position;
-    QString      _label;
-    QDateTime    _when;
+    QPointF _position{0.0, 0.0};
+    QString _label{};
+    QDateTime _when{};
 };
+
+//struct MarkerItem{
+//
+//    MarkerItem(const QPointF& pos, const QDateTime& when, const QString& label);
+//
+//    const QPointF& position() const;
+//    QGeoCoordinate coordinate() const;
+//    const QString& label() const;
+//    const QDateTime& when() const;
+//
+//private:
+//    QPointF      _position;
+//    QString      _label;
+//    QDateTime    _when;
+//};
 
 Q_DECLARE_METATYPE(MarkerItem)
 
