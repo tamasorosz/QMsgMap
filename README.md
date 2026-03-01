@@ -1,4 +1,4 @@
-## Homework
+## QMsgMap
 
 A simple C++/Qt application, which displays a map and connects to a RabbitMQ exchange. 
 The application should constantly receive map positions with names and display them on the map. 
